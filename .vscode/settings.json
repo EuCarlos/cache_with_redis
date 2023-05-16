@@ -1,0 +1,10 @@
+{
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    },
+    "material-icon-theme.folders.associations": {
+        "v[0-9]": "Other",
+        "concerns": "Config"
+    },
+    "dotenv.enableAutocloaking": true
+}
