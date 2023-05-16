@@ -43,13 +43,18 @@ router
         const isProductsFromCacheStale = !(await client.get('getAllProducts:validation'))
 
         if(isProductsFromCacheStale) {
-            await client.set('getAllProducts:is-refetching', (true).toString(), { EX: 20 })
-            
-            setTimeout(async () => {
-                const products = await getAllProducts()
-                await client.set('getAllProducts', JSON.stringify(products))
-                await client.set('getAllProducts:validation', (true).toString(), { EX: 3600 })
-            }, 0)
+            const isRefetching = !!(await client.get('getAllProducts:is-refetching'))
+
+            if(!isRefetching) {
+                await client.set('getAllProducts:is-refetching', (true).toString(), { EX: 20 })
+
+                setTimeout(async () => {
+                    const products = await getAllProducts()
+                    await client.set('getAllProducts', JSON.stringify(products))
+                    await client.set('getAllProducts:validation', (true).toString(), { EX: 3600 })
+                    await client.del('getAllProducts:is-refetching')
+                }, 0)
+            }
         }
 
         if(productsFromCache) {
