@@ -1,9 +1,9 @@
-
 const express = require('express')
 const router = express.Router()
 var bodyParser = require('body-parser')
 
 import { client } from "src/cache/redis.config"
+import JSONResponse from "../../concerns/response"
 
 const getAllProducts = async () => {
     const time = Math.random() * 10000
@@ -40,8 +40,26 @@ router
 
     .get('/', async (req, res) => {
         const productsFromCache = await client.get('getAllProducts')
+        const isProductsFromCacheStale = !(await client.get('getAllProducts:validation'))
 
-        if(productsFromCache) return res.status(200).json(JSON.parse(productsFromCache))
+        if(isProductsFromCacheStale) {
+            await client.set('getAllProducts:is-refetching', (true).toString(), { EX: 20 })
+            
+            setTimeout(async () => {
+                const products = await getAllProducts()
+                await client.set('getAllProducts', JSON.stringify(products))
+                await client.set('getAllProducts:validation', (true).toString(), { EX: 3600 })
+            }, 0)
+        }
+
+        if(productsFromCache) {
+            const result = JSONResponse.response("Request Successfully", true, {
+                data: 'cache',
+                content: JSON.parse(productsFromCache)
+            })
+
+            return res.status(200).json(result)
+        }
 
         const products = await getAllProducts();
         await client.set(
@@ -49,7 +67,12 @@ router
             JSON.stringify(products
         ), { EX: 10 }) // 10 Segundos
 
-        return res.status(200).json(products)
+        const result = JSONResponse.response("Request Successfully", true, {
+            data: 'api',
+            content: products
+        })
+
+        return res.status(200).json(result)
     })
 
     .get('/saved', async (req, res) => {
