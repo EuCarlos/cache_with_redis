@@ -13,6 +13,7 @@ import '@controllers/UsersController'
 // routes
 const v1Router = require('./routes/v1')
 const productsRoutes = require('./routes/v1/products.routes')
+const v1Users = require('./routes/v1/users.routes')
 
 import JsonResponse from './concerns/response'
 
@@ -23,6 +24,9 @@ const app = express();
 app
     .use("/api/v1/docs", swaggerUI.serve, swaggerUI.setup(swaggerDocsV1 ))
     .use('/api/v1/workouts', v1Router)
+
+    // USERS
+    .use('/api/v1/sign-in', v1Users)
 
     // PRODUCTS
     .use('/api/v1/products', productsRoutes)
